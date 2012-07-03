@@ -1,6 +1,11 @@
 LaBloom
 =======
 
+Whats new
+- Added FNVhash hash class implementation, use PHP extansion if posible by environment.
+- FNVhash is know default for hashing values
+- FNVhash is only 32 byte, so data length fo filter is limited to around 30k different values.
+
 Bloom filter, sadly its not very accurate, becouse PHP doesnt have suitable hash funtions, which would generate uniformly distributed values. 
 For now its good to test up to some thousands of values then using long bloom filter.
 For what is bloom filter and why its so cool, check wiki please :)
