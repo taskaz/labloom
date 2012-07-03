@@ -1,6 +1,7 @@
 <?php
 
 include "murmur3.php";
+include "fnvhash.php";
 
 class LaBloom
 {
@@ -37,7 +38,7 @@ class LaBloom
 	 * Hash functions to use in filter
 	 * @var array
 	 */
-	public $hash_f = array("sha1", "adler32", "crc32");
+	public $hash_f = array();//"sha1", "adler32", "crc32"
 
 	/**
 	 * Array of custom functions to use then calculating hashes, array values should be callable
@@ -78,6 +79,12 @@ class LaBloom
 		$this->len = $length;
 		$this->filter = array_fill(0, $length, 0);
 		$this->name = $name;
+		array_push($this->hash_c, function($str){
+			return FnvHash::fnv1($str);
+		});
+		array_push($this->hash_c, function($str){
+			return FnvHash::fnv1("bb".$str."zz");
+		});
 	}
 
 	/**
@@ -119,7 +126,7 @@ class LaBloom
 		}
 		foreach ($this->hash_c as $key => $value) {
 			if( is_callable( $value ) )
-				$ret[] = call_user_func($value, $str);
+				$ret[] = (call_user_func($value, $str)) % $this->len;
 		}
 		return $ret;
 	}
@@ -177,10 +184,12 @@ class LaBloom
 		return false;
 	}
 
-	public function fail_rate()
+	public function fail_rate($filter_len=null, $set_size=null)
 	{
-		$h = count($this->hash_f);
-		return pow((1-pow((1-1/$this->len),$h*$this->cnt)),$h);
+		$len = ($filter_len ? $filter_len : $this->len);
+		$size = ($set_size ? $set_size : $this->cnt);
+		$h = count($this->hash_f) + count($this->hash_c);
+		return pow((1-pow((1-1/$len),$h*$size)),$h);
 	}
 
 	public function __toString()
@@ -201,7 +210,11 @@ class LaBloom
 
 	public function murmur3($str, $len, $seed)
 	{
-		MurMur3::mur3_32($str, $len, $seed);
+		return MurMur3::mur3_32($str, $len, $seed);
 	}
 
+	public function fnv1($str)
+	{
+		return FnvHash::fnv1($str);
+	}
 }
